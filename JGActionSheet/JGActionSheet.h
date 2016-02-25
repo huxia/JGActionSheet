@@ -9,17 +9,10 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
-/**
- Button styles for JGActionSheetSection.
- @sa JGActionSheetSection.
- */
-typedef NS_ENUM(NSUInteger, JGActionSheetButtonStyle) {
-    JGActionSheetButtonStyleDefault,
-    JGActionSheetButtonStyleCancel,
-    JGActionSheetButtonStyleRed,
-    JGActionSheetButtonStyleGreen,
-    JGActionSheetButtonStyleBlue
-};
+
+#define JGActionSheetButtonStyleDefault @"default:000000,e5e5e5,f2f2f2"
+#define JGActionSheetButtonStyleCancel @"cancel:000000,e5e5e5,f2f2f2"
+#define JGActionSheetButtonStyleDestructive @"destructive:ffffff,e74c3c,c0392b"
 
 /**
  Arrow directions for JGActionSheet on iPad.
@@ -65,16 +58,10 @@ typedef NS_ENUM(NSUInteger, JGActionSheetArrowDirection) {
  */
 @property (nonatomic, strong, readonly) UIView *contentView;
 
-
-/**
- Returns a standard cancel section. The button title is "Cancel" (localized string), and the button style is the cancel button style.
-*/
-+ (instancetype)cancelSection;
-
 /**
  Convenience initializer for the @c initWithTitle:message:buttonTitles:buttonStyle: initializer.
  */
-+ (instancetype)sectionWithTitle:(NSString *)title message:(NSString *)message buttonTitles:(NSArray *)buttonTitles buttonStyle:(JGActionSheetButtonStyle)buttonStyle;
++ (instancetype)sectionWithTitle:(NSString *)title message:(NSString *)message buttonTitles:(NSArray *)buttonTitles buttonStyle:(NSString*)buttonStyle;
 
 /**
  Initializes the section with buttons.
@@ -83,7 +70,7 @@ typedef NS_ENUM(NSUInteger, JGActionSheetArrowDirection) {
  @param buttonTitles The titles for the buttons in the section.
  @param buttonStyle The style to apply to the buttons. This can be altered later with the @c setButtonStyle:forButtonAtIndex: method
  */
-- (instancetype)initWithTitle:(NSString *)title message:(NSString *)message buttonTitles:(NSArray *)buttonTitles buttonStyle:(JGActionSheetButtonStyle)buttonStyle;
+- (instancetype)initWithTitle:(NSString *)title message:(NSString *)message buttonTitles:(NSArray *)buttonTitles buttonStyle:(NSString*)buttonStyle;
 
 /**
  Convenience initializer for the @c initWithTitle:message:contentView: method.
@@ -103,7 +90,7 @@ typedef NS_ENUM(NSUInteger, JGActionSheetArrowDirection) {
  @param buttonStyle
  @Warning If the section does not have any buttons or @c index exceeds the number of buttons an exception is thrown.
  */
-- (void)setButtonStyle:(JGActionSheetButtonStyle)buttonStyle forButtonAtIndex:(NSUInteger)index;
+- (void)setButtonStyle:(NSString*)buttonStyle forButtonAtIndex:(NSUInteger)index;
 
 @end
 
