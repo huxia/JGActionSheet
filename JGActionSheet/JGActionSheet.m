@@ -8,6 +8,11 @@
 
 #import "JGActionSheet.h"
 #import <QuartzCore/QuartzCore.h>
+#define ColorFromRGB(rgbValue) [UIColor \
+colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 \
+green:((float)((rgbValue & 0xFF00) >> 8))/255.0 \
+blue:((float)(rgbValue & 0xFF))/255.0 alpha:1.0]
+
 
 #if !__has_feature(objc_arc)
 #error "JGActionSheet requires ARC!"
@@ -188,8 +193,6 @@ static BOOL disableCustomEasing = NO;
 
 @interface JGActionSheetSection ()
 
-@property (nonatomic, assign) NSUInteger index;
-
 @property (nonatomic, copy) void (^buttonPressedBlock)(NSIndexPath *indexPath);
 
 - (void)setUpForContinuous:(BOOL)continuous;
@@ -200,15 +203,11 @@ static BOOL disableCustomEasing = NO;
 
 #pragma mark Initializers
 
-+ (instancetype)cancelSection {
-    return [self sectionWithTitle:nil message:nil buttonTitles:@[NSLocalizedString(@"Cancel",)] buttonStyle:JGActionSheetButtonStyleCancel];
-}
-
-+ (instancetype)sectionWithTitle:(NSString *)title message:(NSString *)message buttonTitles:(NSArray *)buttonTitles buttonStyle:(JGActionSheetButtonStyle)buttonStyle {
++ (instancetype)sectionWithTitle:(NSString *)title message:(NSString *)message buttonTitles:(NSArray *)buttonTitles buttonStyle:(NSString*)buttonStyle {
     return [[self alloc] initWithTitle:title message:message buttonTitles:buttonTitles buttonStyle:buttonStyle];
 }
 
-- (instancetype)initWithTitle:(NSString *)title message:(NSString *)message buttonTitles:(NSArray *)buttonTitles buttonStyle:(JGActionSheetButtonStyle)buttonStyle {
+- (instancetype)initWithTitle:(NSString *)title message:(NSString *)message buttonTitles:(NSArray *)buttonTitles buttonStyle:(NSString*)buttonStyle {
     self = [super init];
     
     if (self) {
@@ -330,7 +329,7 @@ static BOOL disableCustomEasing = NO;
     }
 }
 
-- (void)setButtonStyle:(JGActionSheetButtonStyle)buttonStyle forButtonAtIndex:(NSUInteger)index {
+- (void)setButtonStyle:(NSString*)buttonStyle forButtonAtIndex:(NSUInteger)index {
     if (index < self.buttons.count) {
         UIButton *button = self.buttons[index];
         
@@ -356,45 +355,27 @@ static BOOL disableCustomEasing = NO;
     return [img resizableImageWithCapInsets:UIEdgeInsetsZero];
 }
 
-- (void)setButtonStyle:(JGActionSheetButtonStyle)buttonStyle forButton:(UIButton *)button {
-    UIColor *backgroundColor, *borderColor, *titleColor = nil;
-    UIFont *font = nil;
+- (void)setButtonStyle:(NSString*)buttonStyle forButton:(UIButton *)button {
+   
     
-    if (buttonStyle == JGActionSheetButtonStyleDefault) {
-        font = [UIFont systemFontOfSize:15.0f];
-        titleColor = [UIColor blackColor];
-        
-        backgroundColor = [UIColor colorWithWhite:0.95f alpha:1.0f];
-        borderColor = [UIColor colorWithWhite:0.9f alpha:1.0f];
+    NSArray* nameAndColors = [buttonStyle componentsSeparatedByString:@":"];
+    NSArray* colors = nil;
+    if (nameAndColors.count >= 2) {
+        colors = [[nameAndColors objectAtIndex:1] componentsSeparatedByString:@","];
     }
-    else if (buttonStyle == JGActionSheetButtonStyleCancel) {
-        font = [UIFont boldSystemFontOfSize:15.0f];
-        titleColor = [UIColor blackColor];
-        
-        backgroundColor = [UIColor colorWithWhite:0.95f alpha:1.0f];
-        borderColor = [UIColor colorWithWhite:0.9f alpha:1.0f];
+    if (colors.count < 3) {
+        colors = [[[JGActionSheetButtonStyleDefault componentsSeparatedByString:@":"] objectAtIndex:1] componentsSeparatedByString:@","];
     }
-    else if (buttonStyle == JGActionSheetButtonStyleRed) {
-        font = [UIFont systemFontOfSize:15.0f];
-        titleColor = [UIColor whiteColor];
-        
-        backgroundColor = rgb(231.0f, 76.0f, 60.0f);
-        borderColor = rgb(192.0f, 57.0f, 43.0f);
-    }
-    else if (buttonStyle == JGActionSheetButtonStyleGreen) {
-        font = [UIFont systemFontOfSize:15.0f];
-        titleColor = [UIColor whiteColor];
-        
-        backgroundColor = rgb(46.0f, 204.0f, 113.0f);
-        borderColor = rgb(39.0f, 174.0f, 96.0f);
-    }
-    else if (buttonStyle == JGActionSheetButtonStyleBlue) {
-        font = [UIFont systemFontOfSize:15.0f];
-        titleColor = [UIColor whiteColor];
-        
-        backgroundColor = rgb(52.0f, 152.0f, 219.0f);
-        borderColor = rgb(41.0f, 128.0f, 185.0f);
-    }
+    UInt64
+        title = (UInt64)strtoull([[colors objectAtIndex:0] UTF8String], NULL, 16),
+        background = (UInt64)strtoull([[colors objectAtIndex:1] UTF8String], NULL, 16),
+        border = (UInt64)strtoull([[colors objectAtIndex:2] UTF8String], NULL, 16);
+    UIColor
+        *backgroundColor = ColorFromRGB(background),
+        *borderColor = ColorFromRGB(border),
+        *titleColor = ColorFromRGB(title) ;
+    UIFont *font = [UIFont systemFontOfSize:15.0f];
+    
     
     [button setTitleColor:titleColor forState:UIControlStateNormal];
     
@@ -406,7 +387,7 @@ static BOOL disableCustomEasing = NO;
     button.layer.borderColor = borderColor.CGColor;
 }
 
-- (JGButton *)makeButtonWithTitle:(NSString *)title style:(JGActionSheetButtonStyle)style {
+- (JGButton *)makeButtonWithTitle:(NSString *)title style:(NSString*)style {
     JGButton *b = [[JGButton alloc] init];
     
     b.layer.cornerRadius = 2.0f;
@@ -424,7 +405,7 @@ static BOOL disableCustomEasing = NO;
 
 - (void)buttonPressed:(JGButton *)button {
     if (self.buttonPressedBlock) {
-        self.buttonPressedBlock([NSIndexPath indexPathForRow:(NSInteger)button.row inSection:(NSInteger)self.index]);
+        self.buttonPressedBlock([NSIndexPath indexPathForRow:(NSInteger)button.row inSection:self.tag]);
     }
 }
 
@@ -555,7 +536,7 @@ static BOOL disableCustomEasing = NO;
         };
         
         for (JGActionSheetSection *section in self.sections) {
-            section.index = index;
+            section.tag = index;
             
             [_scrollView addSubview:section];
             
