@@ -54,7 +54,10 @@ blue:((float)(rgbValue & 0xFF))/255.0 alpha:1.0]
 
 #define kHostsCornerRadius 3.0f
 
-#define kSpacing 5.0f
+#define kSpacing 3
+
+#define kLabelSpacing 10
+#define kLabelInnerSpacing 6
 
 #define kArrowBaseWidth 20.0f
 #define kArrowHeight 10.0f
@@ -211,19 +214,23 @@ static BOOL disableCustomEasing = NO;
     self = [super init];
     
     if (self) {
+        _titleView = [[UIView alloc] init];
+        _titleView.backgroundColor = ColorFromRGB(0xf6f6f6);
+        [self addSubview:_titleView];
+        
         if (title) {
             UILabel *titleLabel = [[UILabel alloc] init];
             titleLabel.backgroundColor = [UIColor clearColor];
             titleLabel.textAlignment = NSTextAlignmentCenter;
             titleLabel.font = [UIFont boldSystemFontOfSize:14.0f];
-            titleLabel.textColor = [UIColor blackColor];
+            titleLabel.textColor = ColorFromRGB(0x8f8f8f);
             titleLabel.numberOfLines = 1;
             
             titleLabel.text = title;
             
             _titleLabel = titleLabel;
             
-            [self addSubview:_titleLabel];
+            [_titleView addSubview:_titleLabel];
         }
         
         if (message) {
@@ -231,14 +238,14 @@ static BOOL disableCustomEasing = NO;
             messageLabel.backgroundColor = [UIColor clearColor];
             messageLabel.textAlignment = NSTextAlignmentCenter;
             messageLabel.font = [UIFont systemFontOfSize:12.0f];
-            messageLabel.textColor = [UIColor blackColor];
+            messageLabel.textColor = ColorFromRGB(0x8f8f8f);
             messageLabel.numberOfLines = 0;
             
             messageLabel.text = message;
             
             _messageLabel = messageLabel;
             
-            [self addSubview:_messageLabel];
+            [_titleView addSubview:_messageLabel];
         }
         
         if (buttonTitles.count) {
@@ -319,7 +326,7 @@ static BOOL disableCustomEasing = NO;
         self.layer.shadowOpacity = 0.0f;
     }
     else {
-        self.backgroundColor = [UIColor whiteColor];
+        self.backgroundColor = [UIColor clearColor];
         self.layer.cornerRadius = kHostsCornerRadius;
         
         self.layer.shadowColor = [UIColor blackColor].CGColor;
@@ -329,15 +336,15 @@ static BOOL disableCustomEasing = NO;
     }
 }
 
-- (void)setButtonStyle:(NSString*)buttonStyle forButtonAtIndex:(NSUInteger)index {
+- (UIButton*)setButtonStyle:(NSString*)buttonStyle forButtonAtIndex:(NSUInteger)index {
     if (index < self.buttons.count) {
         UIButton *button = self.buttons[index];
         
-        [self setButtonStyle:buttonStyle forButton:button];
+        return [self setButtonStyle:buttonStyle forButton:button];
     }
     else {
         NSLog(@"ERROR: Index out of bounds");
-        return;
+        return nil;
     }
 }
 
@@ -355,44 +362,59 @@ static BOOL disableCustomEasing = NO;
     return [img resizableImageWithCapInsets:UIEdgeInsetsZero];
 }
 
-- (void)setButtonStyle:(NSString*)buttonStyle forButton:(UIButton *)button {
+- (UIButton*)setButtonStyle:(NSString*)buttonStyle forButton:(UIButton *)button {
    
     
     NSArray* nameAndColors = [buttonStyle componentsSeparatedByString:@":"];
     NSArray* colors = nil;
+    BOOL bold = NO;
+    CGFloat fontSize = 15.0f;
+    if (nameAndColors.count >= 1) {
+        NSArray* nameAndBoldAndSize = [[nameAndColors objectAtIndex:0] componentsSeparatedByString:@","];
+        if (nameAndBoldAndSize.count >= 2){
+            bold = [[nameAndBoldAndSize objectAtIndex:1] isEqualToString:@"bold"];
+        }
+        if (nameAndBoldAndSize.count >= 3){
+            fontSize = [[nameAndBoldAndSize objectAtIndex:2] floatValue];
+        }
+    }
     if (nameAndColors.count >= 2) {
         colors = [[nameAndColors objectAtIndex:1] componentsSeparatedByString:@","];
     }
-    if (colors.count < 3) {
+    if (colors.count < 2) {
         colors = [[[JGActionSheetButtonStyleDefault componentsSeparatedByString:@":"] objectAtIndex:1] componentsSeparatedByString:@","];
     }
     UInt64
         title = (UInt64)strtoull([[colors objectAtIndex:0] UTF8String], NULL, 16),
-        background = (UInt64)strtoull([[colors objectAtIndex:1] UTF8String], NULL, 16),
-        border = (UInt64)strtoull([[colors objectAtIndex:2] UTF8String], NULL, 16);
+        background = (UInt64)strtoull([[colors objectAtIndex:1] UTF8String], NULL, 16)
+        ;
     UIColor
         *backgroundColor = ColorFromRGB(background),
-        *borderColor = ColorFromRGB(border),
         *titleColor = ColorFromRGB(title) ;
-    UIFont *font = [UIFont systemFontOfSize:15.0f];
+    UIFont *font = bold ? [UIFont boldSystemFontOfSize:fontSize] : [UIFont systemFontOfSize:fontSize];
     
     
     [button setTitleColor:titleColor forState:UIControlStateNormal];
     
     button.titleLabel.font = font;
     
-    [button setBackgroundImage:[self pixelImageWithColor:backgroundColor] forState:UIControlStateNormal];
-    [button setBackgroundImage:[self pixelImageWithColor:borderColor] forState:UIControlStateHighlighted];
+    const CGFloat* colorBackground = CGColorGetComponents(backgroundColor.CGColor);
     
-    button.layer.borderColor = borderColor.CGColor;
+    UIColor
+        *backgroundHighlightedColor = [UIColor colorWithRed:colorBackground[0] green:colorBackground[1] blue:colorBackground[2] alpha:0.7f];
+    [button setBackgroundImage:[self pixelImageWithColor:backgroundColor] forState:UIControlStateNormal];
+    [button setBackgroundImage:[self pixelImageWithColor:backgroundHighlightedColor] forState:UIControlStateHighlighted];
+    
+//    button.layer.borderColor = borderColor.CGColor;
+    return button;
 }
 
 - (JGButton *)makeButtonWithTitle:(NSString *)title style:(NSString*)style {
     JGButton *b = [[JGButton alloc] init];
     
-    b.layer.cornerRadius = 2.0f;
+//    b.layer.cornerRadius = 2.0f;
     b.layer.masksToBounds = YES;
-    b.layer.borderWidth = 1.0f;
+//    b.layer.borderWidth = 1.0f;
     
     [b setTitle:title forState:UIControlStateNormal];
     
@@ -415,17 +437,20 @@ static BOOL disableCustomEasing = NO;
     
     CGFloat height = 0.0f;
     
+    
     if (self.titleLabel) {
-        height += spacing;
+        height += kLabelSpacing;
         
         [self.titleLabel sizeToFit];
         height += CGRectGetHeight(self.titleLabel.frame);
         
-        self.titleLabel.frame = (CGRect){{spacing, spacing}, {width-spacing*2.0f, CGRectGetHeight(self.titleLabel.frame)}};
+        self.titleLabel.frame = (CGRect){{spacing, kLabelSpacing}, {width-spacing*2.0f, CGRectGetHeight(self.titleLabel.frame)}};
+    
+    
     }
     
     if (self.messageLabel) {
-        height += spacing;
+        height += kLabelInnerSpacing;
         
         CGSize maxLabelSize = {width-spacing*2.0f, width};
         
@@ -448,26 +473,32 @@ static BOOL disableCustomEasing = NO;
         height += messageLabelHeight;
     }
     
+    
+    if (self.titleLabel || self.messageLabel) {
+        height += kLabelSpacing;
+    }
+    self.titleView.frame = (CGRect){{0, 0}, {width, height - 1/[UIScreen mainScreen].scale}};
+    
     for (UIButton *button in self.buttons) {
-        height += spacing;
+//        height += spacing;
         
-        button.frame = (CGRect){{spacing, height}, {width-spacing*2.0f, buttonHeight}};
+        button.frame = (CGRect){{0, height}, {width, buttonHeight - 1/[UIScreen mainScreen].scale}};
         
         height += buttonHeight;
     }
     
     if (self.contentView) {
-        height += spacing;
+//        height += spacing;
         
-        self.contentView.frame = (CGRect){{spacing, height}, {width-spacing*2.0f, self.contentView.frame.size.height}};
+        self.contentView.frame = (CGRect){{0, height}, {width, self.contentView.frame.size.height}};
         
         height += CGRectGetHeight(self.contentView.frame);
     }
     
-    height += spacing;
+//    height += spacing;
     
     self.frame = (CGRect){CGPointZero, {width, height}};
-    
+    self.layer.masksToBounds = YES;
     return self.frame;
 }
 
