@@ -10,9 +10,9 @@
 #import <UIKit/UIKit.h>
 
 
-#define JGActionSheetButtonStyleDefault @"default:000000,e5e5e5,f2f2f2"
-#define JGActionSheetButtonStyleCancel @"cancel:000000,e5e5e5,f2f2f2"
-#define JGActionSheetButtonStyleDestructive @"destructive:ffffff,e74c3c,c0392b"
+#define JGActionSheetButtonStyleDefault @"default:333333,f6f6f6"
+#define JGActionSheetButtonStyleCancel @"cancel,bold:333333,ffffff"
+#define JGActionSheetButtonStyleDestructive @"destructive:333333,f6f6f6"
 
 /**
  Arrow directions for JGActionSheet on iPad.
@@ -46,6 +46,11 @@ typedef NS_ENUM(NSUInteger, JGActionSheetArrowDirection) {
  The label containing the message of the section.
  */
 @property (nonatomic, strong, readonly) UILabel *messageLabel;
+
+
+
+@property (nonatomic, strong, readonly) UIView *titleView;
+
 
 /**
  If the section was initialized with button titles, the corresponding buttons are in this array. You may access these to modify the text color, the font etc.
@@ -90,7 +95,7 @@ typedef NS_ENUM(NSUInteger, JGActionSheetArrowDirection) {
  @param buttonStyle
  @Warning If the section does not have any buttons or @c index exceeds the number of buttons an exception is thrown.
  */
-- (void)setButtonStyle:(NSString*)buttonStyle forButtonAtIndex:(NSUInteger)index;
+- (UIButton*)setButtonStyle:(NSString*)buttonStyle forButtonAtIndex:(NSUInteger)index;
 
 @end
 
