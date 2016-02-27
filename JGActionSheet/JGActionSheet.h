@@ -12,7 +12,7 @@
 
 #define JGActionSheetButtonStyleDefault @"default:333333,f6f6f6"
 #define JGActionSheetButtonStyleCancel @"cancel,bold:333333,ffffff"
-#define JGActionSheetButtonStyleDestructive @"destructive:333333,f6f6f6"
+#define JGActionSheetButtonStyleDestructive @"destructive:ff3824,f6f6f6"
 
 /**
  Arrow directions for JGActionSheet on iPad.
